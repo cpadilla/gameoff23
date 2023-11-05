@@ -3,6 +3,7 @@ use bevy::prelude::*;
 pub mod splash;
 pub mod menu;
 pub mod game;
+pub mod dialogue;
 
 pub const BLACK: Color = Color::rgb(0.0, 0.0, 0.0);
 pub const WHITE: Color = Color::rgb(1.0, 1.0, 1.0);

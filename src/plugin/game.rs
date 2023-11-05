@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use super::{despawn_screen, DisplayQuality, GameState, Volume, WHITE};
+use super::{despawn_screen, DisplayQuality, GameState, Volume, WHITE, dialogue::{Dialogue, DialogueQueue}};
 
 // This plugin will contain the game. In this case, it's just be a screen that will
 // display the current settings for 5 seconds before returning to the menu
@@ -23,9 +23,16 @@ struct GameTimer(Timer);
 
 fn game_setup(
     mut commands: Commands,
+    mut dialogue_queue: ResMut<DialogueQueue>,
     display_quality: Res<DisplayQuality>,
     volume: Res<Volume>,
 ) {
+    // Initial dialogue
+    dialogue_queue.queue.push_back(Dialogue{ portrait: 0, text: String::from("...")});
+    dialogue_queue.queue.push_back(Dialogue{ portrait: 0, text: String::from("Hey...")});
+    dialogue_queue.queue.push_back(Dialogue{ portrait: 0, text: String::from("...")});
+    dialogue_queue.queue.push_back(Dialogue{ portrait: 0, text: String::from("You're finally awake.")});
+
     commands
         .spawn((
             NodeBundle {
@@ -108,7 +115,7 @@ fn game_setup(
                 });
         });
     // Spawn a 5 seconds timer to trigger going back to the menu
-    commands.insert_resource(GameTimer(Timer::from_seconds(5.0, TimerMode::Once)));
+    commands.insert_resource(GameTimer(Timer::from_seconds(30.0, TimerMode::Once)));
 }
 
 // Tick the timer, and change state when finished
@@ -117,6 +124,8 @@ fn game(
     mut game_state: ResMut<NextState<GameState>>,
     mut timer: ResMut<GameTimer>,
 ) {
+
+    // Return to the menu screen after timer finishes
     if timer.tick(time.delta()).finished() {
         game_state.set(GameState::Menu);
     }

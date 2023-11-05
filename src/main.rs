@@ -14,7 +14,7 @@ fn main() {
         .add_state::<GameState>()
         .add_systems(Startup, setup)
         // Adds the plugins for each state
-        .add_plugins((splash::SplashPlugin, menu::MenuPlugin, game::GamePlugin))
+        .add_plugins((splash::SplashPlugin, menu::MenuPlugin, game::GamePlugin, dialogue::DialoguePlugin))
         .run();
 }
 
