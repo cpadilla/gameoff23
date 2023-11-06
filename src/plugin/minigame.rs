@@ -1,13 +1,22 @@
 use bevy::{prelude::*};
 use itertools::Itertools;
+use super::{despawn_screen, GameState};
 
-fn main() {
-    App::new()
-        .add_plugins(DefaultPlugins)
-        .add_systems(Startup, setup)
-        .add_systems(Update, hover_system)
-        .run();
+pub struct MinigamePlugin;
+
+impl Plugin for MinigamePlugin {
+    fn build(&self, app: &mut App) {
+        app
+            // .add_state::<MinigameState>()
+            .add_systems(OnEnter(GameState::Minigame), setup)
+            .add_systems(Update, (click, keyboard))
+            .add_systems(OnExit(GameState::Minigame), despawn_screen::<MinigameScreen>);
+    }
 }
+
+// Tag component used to tag entities added on this scene
+#[derive(Component)]
+struct MinigameScreen;
 
 fn setup(
     mut commands: Commands,
@@ -25,7 +34,7 @@ fn setup(
     const BOARD_SIZE: f32 = CELL_SIZE * GRID_SIZE as f32 + LINES_COUNT as f32 * LINE_THICKNESS;
     const BOARD_COLOR: Color = Color::WHITE;
 
-    commands.spawn(Camera2dBundle::default());
+    // commands.spawn(Camera2dBundle::default());
 
     for line in 0..LINES_COUNT {
       let position = -BOARD_SIZE / 2.0
@@ -33,7 +42,7 @@ fn setup(
           + LINE_THICKNESS / 2.0;
 
       // Horizontal
-      commands.spawn(SpriteBundle {
+      commands.spawn((SpriteBundle {
           sprite: Sprite {
               color: BOARD_COLOR,
               ..default()
@@ -44,10 +53,10 @@ fn setup(
               ..default()
           },
           ..default()
-      });
+      }, MinigameScreen));
 
       // Vertical
-      commands.spawn(SpriteBundle {
+      commands.spawn((SpriteBundle {
           sprite: Sprite {
               color: BOARD_COLOR,
               ..default()
@@ -58,10 +67,10 @@ fn setup(
               ..default()
           },
           ..default()
-      });
+      }, MinigameScreen));
   }
 
-    commands.spawn(NodeBundle {
+    commands.spawn((NodeBundle {
         style: Style {
             width: Val::Percent(100.0),
             height: Val::Percent(100.0),
@@ -70,7 +79,7 @@ fn setup(
             ..default()
         },
         ..default()
-    })
+    }, MinigameScreen))
     .with_children(|parent| {
         parent.spawn(NodeBundle {
                 style: Style {
@@ -140,7 +149,7 @@ fn setup(
 }
 
 
-fn hover_system(
+fn click(
     mut interaction_query: Query<
         (
             &Interaction,
@@ -148,6 +157,7 @@ fn hover_system(
         ),
         (Changed<Interaction>, With<Button>),
     >,
+    mut game_state: ResMut<NextState<GameState>>,
 ) {
   for (interaction, mut background_color) in interaction_query.iter_mut() {
     *background_color = match *interaction {
@@ -158,5 +168,37 @@ fn hover_system(
 
       // Color::hsl(211.0, 0.9, 0.48)
     }
+  }
+}
+
+
+fn keyboard(
+  mut commands: Commands,
+  keyboard_input: Res<Input<KeyCode>>,
+  asset_server: Res<AssetServer>,
+  mut texture_atlases: ResMut<Assets<TextureAtlas>>,
+  mut query: Query<(
+      &mut TextureAtlasSprite,
+      &mut Handle<TextureAtlas>,
+      Entity,
+  )>,
+  mut game_state: ResMut<NextState<GameState>>,
+) {
+  if keyboard_input.just_pressed(KeyCode::Escape) {
+      game_state.set(GameState::Menu);
+      for (mut sprite, mut p, mut e) in &mut query {
+
+
+          // INFO: can despawn sprite
+          // commands.entity(e).despawn();
+
+          // INFO: can swap sprite
+          // let texture_handle = asset_server.load("blast_2.png");
+          // let texture_atlas =
+          //     TextureAtlas::from_grid(texture_handle, Vec2::new(64.0, 64.0), 7, 1, None, None);
+          // let texture_atlas_handle = texture_atlases.add(texture_atlas);
+          // sprite.index = 0;
+          // *p = texture_atlas_handle;
+      }
   }
 }

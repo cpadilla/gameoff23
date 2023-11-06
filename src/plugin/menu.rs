@@ -99,6 +99,7 @@ struct SelectedOption;
 #[derive(Component)]
 enum MenuButtonAction {
     Play,
+    Minigame,
     Settings,
     SettingsDisplay,
     SettingsSound,
@@ -215,6 +216,7 @@ fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
                     // Display three buttons for each action available from the main menu:
                     // - new game
+                    // - minigame
                     // - settings
                     // - quit
                     parent
@@ -235,6 +237,27 @@ fn main_menu_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
                             });
                             parent.spawn(TextBundle::from_section(
                                 "New Game",
+                                button_text_style.clone(),
+                            ));
+                        });
+                    parent
+                        .spawn((
+                            ButtonBundle {
+                                style: button_style.clone(),
+                                background_color: NORMAL_BUTTON.into(),
+                                ..default()
+                            },
+                            MenuButtonAction::Minigame,
+                        ))
+                        .with_children(|parent| {
+                            let icon = asset_server.load("textures/Game Icons/right.png");
+                            parent.spawn(ImageBundle {
+                                style: button_icon_style.clone(),
+                                image: UiImage::new(icon),
+                                ..default()
+                            });
+                            parent.spawn(TextBundle::from_section(
+                                "Minigame",
                                 button_text_style.clone(),
                             ));
                         });
@@ -548,6 +571,10 @@ fn menu_action(
                 MenuButtonAction::Quit => app_exit_events.send(AppExit),
                 MenuButtonAction::Play => {
                     game_state.set(GameState::Game);
+                    menu_state.set(MenuState::Disabled);
+                }
+                MenuButtonAction::Minigame => {
+                    game_state.set(GameState::Minigame);
                     menu_state.set(MenuState::Disabled);
                 }
                 MenuButtonAction::Settings => menu_state.set(MenuState::Settings),

@@ -4,6 +4,7 @@ pub mod splash;
 pub mod menu;
 pub mod game;
 pub mod dialogue;
+pub mod minigame;
 
 pub const BLACK: Color = Color::rgb(0.0, 0.0, 0.0);
 pub const WHITE: Color = Color::rgb(1.0, 1.0, 1.0);
@@ -16,6 +17,7 @@ pub enum GameState {
     Splash,
     Menu,
     Game,
+    Minigame,
 }
 
 // One of the two settings that can be set through the menu. It will be a resource in the app
