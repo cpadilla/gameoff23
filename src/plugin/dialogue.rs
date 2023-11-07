@@ -31,6 +31,7 @@ pub enum DialogueState {
     ShowDialogue,
     #[default]
     Disabled,
+    Transition,
 }
 
 // Hashmap for storing dialogue images
@@ -145,10 +146,6 @@ fn show_dialogue(
                 });
             });
         });
-        
-    if dialogue_queue.queue.len() <= 0 {
-        dialogue_state.set(DialogueState::Disabled);
-    }
 }
 
 fn update(
@@ -163,10 +160,14 @@ fn update(
     if dialogue_queue.queue.len() > 0 {
         dialogue_state.set(DialogueState::ShowDialogue);
     }
-    
+
     // if continued, dismiss current dialogue
     if buttons.just_pressed(MouseButton::Left) {
-        dialogue_state.set(DialogueState::Disabled);
         despawn_screen::<DialogueScreen>(to_despawn, commands);
+        if dialogue_queue.queue.len() > 0 {
+            dialogue_state.set(DialogueState::Transition);
+        } else {
+            dialogue_state.set(DialogueState::Disabled);
+        }
     }
 }
