@@ -4,6 +4,7 @@ pub mod splash;
 pub mod menu;
 pub mod game;
 pub mod dialogue;
+pub mod minigame;
 mod level0;
 
 pub const BLACK: Color = Color::rgb(0.0, 0.0, 0.0);
@@ -17,6 +18,7 @@ pub enum GameState {
     Splash,
     Menu,
     Game,
+    Minigame,
 }
 
 // Enum that will be used as a global state for the game level
