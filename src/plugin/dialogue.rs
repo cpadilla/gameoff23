@@ -1,6 +1,6 @@
 use std::collections::VecDeque;
 use bevy::{prelude::*, utils::HashMap};
-use super::despawn_screen;
+use super::{despawn_screen, GameState};
 
 // This plugin manages the dialogue queue
 
@@ -17,7 +17,8 @@ impl Plugin for DialoguePlugin {
             })
             .add_state::<DialogueState>()
             .add_systems(OnEnter(DialogueState::ShowDialogue), show_dialogue)
-            .add_systems(Update, update);
+            .add_systems(Update, update)
+            .add_systems(OnEnter(GameState::Menu), despawn_screen::<DialogueScreen>);
     }
 }
 
@@ -153,9 +154,16 @@ fn update(
     buttons: Res<Input<MouseButton>>,
     dialogue_queue: Res<DialogueQueue>,
     mut dialogue_state: ResMut<NextState<DialogueState>>,
-    to_despawn: Query<Entity, With<DialogueScreen>>
+    to_despawn: Query<Entity, With<DialogueScreen>>,
+    game_state: Res<State<GameState>>
 ) {
-    
+    match game_state.get() {
+        GameState::Game => {},
+        GameState::Menu => { return },
+        GameState::Minigame => {},
+        GameState::Splash => { return },
+    }
+
     // Show dialogue if there is anything in the queue
     if dialogue_queue.queue.len() > 0 {
         dialogue_state.set(DialogueState::ShowDialogue);
