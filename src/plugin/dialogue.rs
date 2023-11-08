@@ -1,5 +1,5 @@
 use std::collections::VecDeque;
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::HashMap};
 use super::despawn_screen;
 
 // This plugin manages the dialogue queue
@@ -11,6 +11,9 @@ impl Plugin for DialoguePlugin {
         app
             .insert_resource(DialogueQueue {
                 queue: VecDeque::new()
+            })
+            .insert_resource(DialogueImages {
+                map: HashMap::new()
             })
             .add_state::<DialogueState>()
             .add_systems(OnEnter(DialogueState::ShowDialogue), show_dialogue)
@@ -28,6 +31,15 @@ pub enum DialogueState {
     ShowDialogue,
     #[default]
     Disabled,
+    Transition,
+}
+
+// Hashmap for storing dialogue images
+// We don't really need this, but I guess we do
+// since images sometimes won't spawn without it
+#[derive(Resource)]
+pub struct DialogueImages {
+    pub map: HashMap<i32, Handle<Image>>
 }
 
 // Queue resource for displaying dialogue
@@ -47,8 +59,10 @@ pub struct Dialogue {
 fn show_dialogue(
     mut commands: Commands,
     mut dialogue_state: ResMut<NextState<DialogueState>>,
-    mut dialogue_queue: ResMut<DialogueQueue>
+    mut dialogue_queue: ResMut<DialogueQueue>,
+    asset_server: Res<AssetServer>
 ) {
+
     commands
         .spawn((
             NodeBundle {
@@ -85,7 +99,7 @@ fn show_dialogue(
                     style: Style {
                         width: Val::Percent(98.0),
                         height: Val::Percent(90.0),
-                        flex_direction: FlexDirection::Column,
+                        flex_direction: FlexDirection::Row,
                         align_items: AlignItems::FlexStart,
                         justify_content: JustifyContent::FlexStart,
                         ..default()
@@ -93,6 +107,27 @@ fn show_dialogue(
                     background_color: Color::BLACK.into(),
                     ..default()
                 }).with_children(|parent| {
+                    
+                    parent.spawn(ImageBundle {
+                        style: Style {
+                            height: Val::Percent(100.0),
+                            flex_direction: FlexDirection::Row,
+                            align_items: AlignItems::FlexStart,
+                            justify_content: JustifyContent::FlexStart,
+                            ..default()
+                        },
+                        image: UiImage {
+                            texture: asset_server.load("player.png"),
+                            ..default()
+                        },
+                        transform: Transform {
+                            translation: Vec3 { x: 0.0, y: 0.0, z: 0.0 },
+                            scale: Vec3 { x: 1.0, y: 1.0, z: 1.0 },
+                            ..default()
+                        },
+                        ..default()
+                    });
+
                     let dialogue = dialogue_queue.queue.pop_front();
                     parent.spawn(
                         TextBundle::from_section(
@@ -111,10 +146,6 @@ fn show_dialogue(
                 });
             });
         });
-    
-    if dialogue_queue.queue.len() <= 0 {
-        dialogue_state.set(DialogueState::Disabled);
-    }
 }
 
 fn update(
@@ -129,11 +160,14 @@ fn update(
     if dialogue_queue.queue.len() > 0 {
         dialogue_state.set(DialogueState::ShowDialogue);
     }
-    
+
     // if continued, dismiss current dialogue
     if buttons.just_pressed(MouseButton::Left) {
-        println!("Mouse clicked");
-        dialogue_state.set(DialogueState::Disabled);
         despawn_screen::<DialogueScreen>(to_despawn, commands);
+        if dialogue_queue.queue.len() > 0 {
+            dialogue_state.set(DialogueState::Transition);
+        } else {
+            dialogue_state.set(DialogueState::Disabled);
+        }
     }
 }

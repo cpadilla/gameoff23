@@ -5,6 +5,7 @@ pub mod menu;
 pub mod game;
 pub mod dialogue;
 pub mod minigame;
+mod level0;
 
 pub const BLACK: Color = Color::rgb(0.0, 0.0, 0.0);
 pub const WHITE: Color = Color::rgb(1.0, 1.0, 1.0);
@@ -18,6 +19,16 @@ pub enum GameState {
     Menu,
     Game,
     Minigame,
+}
+
+// Enum that will be used as a global state for the game level
+#[derive(Clone, Copy, Default, Eq, PartialEq, Debug, Hash, States)]
+pub enum LevelState {
+    #[default]
+    Menu,
+    Level_0,
+    Level_1,
+    Level_2
 }
 
 // One of the two settings that can be set through the menu. It will be a resource in the app

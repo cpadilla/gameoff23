@@ -1,6 +1,14 @@
 use bevy::prelude::*;
 
-use super::{despawn_screen, DisplayQuality, GameState, Volume, WHITE, dialogue::{Dialogue, DialogueQueue}};
+use super::{despawn_screen,
+    GameState,
+    dialogue::{
+        DialogueImages,
+        DialogueState
+    },
+    level0::*,
+    LevelState
+};
 
 // This plugin will contain the game. In this case, it's just be a screen that will
 // display the current settings for 5 seconds before returning to the menu
@@ -10,7 +18,15 @@ impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(GameState::Game), game_setup)
             .add_systems(Update, game.run_if(in_state(GameState::Game)))
-            .add_systems(OnExit(GameState::Game), despawn_screen::<OnGameScreen>);
+            .add_systems(OnExit(GameState::Game), despawn_screen::<OnGameScreen>)
+            .add_state::<LevelState>()
+            .insert_resource(Player {
+
+            })
+            // Level 0
+            .insert_resource(Level_0 { stage: 0 })
+            .add_systems(OnEnter(LevelState::Level_0), level_0_setup)
+            .add_systems(Update, level_0_update.run_if(in_state(LevelState::Level_0)));
     }
 }
 
@@ -18,115 +34,34 @@ impl Plugin for GamePlugin {
 #[derive(Component)]
 struct OnGameScreen;
 
-#[derive(Resource, Deref, DerefMut)]
-struct GameTimer(Timer);
-
-fn game_setup(
-    mut commands: Commands,
-    mut dialogue_queue: ResMut<DialogueQueue>,
-    display_quality: Res<DisplayQuality>,
-    volume: Res<Volume>,
-) {
-    // Initial dialogue
-    dialogue_queue.queue.push_back(Dialogue{ portrait: 0, text: String::from("...")});
-    dialogue_queue.queue.push_back(Dialogue{ portrait: 0, text: String::from("Hey...")});
-    dialogue_queue.queue.push_back(Dialogue{ portrait: 0, text: String::from("...")});
-    dialogue_queue.queue.push_back(Dialogue{ portrait: 0, text: String::from("You're finally awake.")});
-
-    commands
-        .spawn((
-            NodeBundle {
-                style: Style {
-                    width: Val::Percent(100.0),
-                    height: Val::Percent(100.0),
-                    // center children
-                    align_items: AlignItems::Center,
-                    justify_content: JustifyContent::Center,
-                    ..default()
-                },
-                ..default()
-            },
-            OnGameScreen,
-        ))
-        .with_children(|parent| {
-            // First create a `NodeBundle` for centering what we want to display
-            parent
-                .spawn(NodeBundle {
-                    style: Style {
-                        // This will display its children in a column, from top to bottom
-                        flex_direction: FlexDirection::Column,
-                        // `align_items` will align children on the cross axis. Here the main axis is
-                        // vertical (column), so the cross axis is horizontal. This will center the
-                        // children
-                        align_items: AlignItems::Center,
-                        ..default()
-                    },
-                    background_color: Color::BLACK.into(),
-                    ..default()
-                })
-                .with_children(|parent| {
-                    // Display two lines of text, the second one with the current settings
-                    parent.spawn(
-                        TextBundle::from_section(
-                            "Will be back to the menu shortly...",
-                            TextStyle {
-                                font_size: 80.0,
-                                color: WHITE,
-                                ..default()
-                            },
-                        )
-                        .with_style(Style {
-                            margin: UiRect::all(Val::Px(50.0)),
-                            ..default()
-                        }),
-                    );
-                    parent.spawn(
-                        TextBundle::from_sections([
-                            TextSection::new(
-                                format!("quality: {:?}", *display_quality),
-                                TextStyle {
-                                    font_size: 60.0,
-                                    color: Color::BLUE,
-                                    ..default()
-                                },
-                            ),
-                            TextSection::new(
-                                " - ",
-                                TextStyle {
-                                    font_size: 60.0,
-                                    color: WHITE,
-                                    ..default()
-                                },
-                            ),
-                            TextSection::new(
-                                format!("volume: {:?}", *volume),
-                                TextStyle {
-                                    font_size: 60.0,
-                                    color: Color::GREEN,
-                                    ..default()
-                                },
-                            ),
-                        ])
-                        .with_style(Style {
-                            margin: UiRect::all(Val::Px(50.0)),
-                            ..default()
-                        }),
-                    );
-                });
-        });
-    // Spawn a 5 seconds timer to trigger going back to the menu
-    commands.insert_resource(GameTimer(Timer::from_seconds(30.0, TimerMode::Once)));
+#[derive(Resource)]
+struct Player {
+    
 }
 
-// Tick the timer, and change state when finished
+fn game_setup(
+    mut dialogue_images: ResMut<DialogueImages>,
+    asset_server: Res<AssetServer>,
+    mut level_state: ResMut<NextState<LevelState>>
+) {
+
+    // Set level 0
+    level_state.set(LevelState::Level_0);
+
+    // Load dialogue images
+    dialogue_images.map.insert(1, asset_server.load("player.png"));
+}
+
+// Main Game Update Loop
 fn game(
     time: Res<Time>,
     mut game_state: ResMut<NextState<GameState>>,
-    mut timer: ResMut<GameTimer>,
+    mut level_state: ResMut<NextState<LevelState>>,
+    dialogue_state: Res<NextState<DialogueState>>
 ) {
 
     // Return to the menu screen after timer finishes
-    if timer.tick(time.delta()).finished() {
-        game_state.set(GameState::Menu);
-    }
+    // if timer.tick(time.delta()).finished() {
+        // game_state.set(GameState::Menu);
+    // }
 }
