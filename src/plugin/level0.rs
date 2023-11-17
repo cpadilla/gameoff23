@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use super::{
     GameState,
     LevelState,
+    game::Player,
     dialogue::{
         Dialogue,
         DialogueQueue,
@@ -31,6 +32,8 @@ pub fn level_0_setup(
 
 pub fn level_0_update(
     mut commands: Commands,
+    keys: Res<Input<KeyCode>>,
+    mut query: Query<(&mut Player, &mut Transform)>,
     mut level_state: ResMut<NextState<LevelState>>,
     dialogue_state: Res<State<DialogueState>>,
     mut level0_state: ResMut<Level_0>,
@@ -84,14 +87,24 @@ pub fn level_0_update(
                 None => {}
             }
         },
-        // Displaye more dialogue
+        // Display more dialogue
         4 => {
-            dialogue_queue.queue.push_back(Dialogue{ portrait: 0, text: String::from("Let's bring you up to speed.")});
-            dialogue_queue.queue.push_back(Dialogue{ portrait: 0, text: String::from("We got a lot of work to do.")});
+            dialogue_queue.queue.push_back(Dialogue{ portrait: 0, text: String::from("Let's bring you in to the station.")});
+            dialogue_queue.queue.push_back(Dialogue{ portrait: 0, text: String::from("Use the arrow keys or WASD to bring dock your ship to the station.")});
             level0_state.stage += 1;
         },
-        // Wait for dialogue to finish
+        // Wait for dialogue to start
         5 => {
+            match dialogue_state.get() {
+                DialogueState::Disabled => {}
+                DialogueState::ShowDialogue => {
+                    level0_state.stage += 1;
+                },
+                DialogueState::Transition => {},
+            }
+        },
+        // Wait for dialogue to finish
+        6 => {
             match dialogue_state.get() {
                 DialogueState::Disabled => {
                     level0_state.stage += 1;
@@ -100,8 +113,26 @@ pub fn level_0_update(
                 DialogueState::Transition => {},
             }
         },
+        // Allow player movement
+        // Move this to it's own update function later and just toggle canMove state on player
+        7 => {
+            let (mut player, mut transform) = query.single_mut();
+            
+            if keys.just_pressed(KeyCode::W) || keys.just_pressed(KeyCode::Up) {
+                transform.translation += Vec3::new(0.0, 10.0, 0.0);
+            }
+            if keys.just_pressed(KeyCode::S) || keys.just_pressed(KeyCode::Down) {
+                transform.translation += Vec3::new(0.0, -10.0, 0.0);
+            }
+            if keys.just_pressed(KeyCode::A) || keys.just_pressed(KeyCode::Left) {
+                transform.translation += Vec3::new(-10.0, 0.0, 0.0);
+            }
+            if keys.just_pressed(KeyCode::D) || keys.just_pressed(KeyCode::Right) {
+                transform.translation += Vec3::new(10.0, 0.0, 0.0);
+            }
+        },
         // Complete tutorial
-        6 => {
+        8 => {
             println!("Completed tutorial");
             level_state.set(LevelState::Level_1);
             level0_state.stage += 1;

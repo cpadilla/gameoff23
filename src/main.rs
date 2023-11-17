@@ -5,7 +5,7 @@ mod plugin;
 
 fn main() {
     App::new()
-        .add_plugins(DefaultPlugins)
+        .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
         // Insert as resource the initial value for the settings resources
         .insert_resource(ClearColor(BLACK))
         .insert_resource(DisplayQuality::Medium)
